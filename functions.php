@@ -16,6 +16,8 @@ $sage_includes = [
   'lib/titles.php',                    // Page titles
   'lib/wrapper.php',                   // Theme wrapper class
   'lib/customizer.php',                // Theme customizer
+  'lib/custom-post-types.php',         // Custom Post Types
+  'lib/custom-taxonomies.php',         // Custom Taxonomies
   'lib/gulp-sitemap-generator.php'     // Sitemap Generator for Gulp tasks
 ];
 
