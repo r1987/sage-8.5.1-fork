@@ -19,6 +19,8 @@ var runSequence  = require('run-sequence');
 var sass         = require('gulp-sass');
 var sourcemaps   = require('gulp-sourcemaps');
 var uglify       = require('gulp-uglify');
+var uncss        = require('gulp-uncss');
+var shell        = require('gulp-shell');
 
 // See https://github.com/austinpray/asset-builder
 var manifest = require('asset-builder')('./assets/manifest.json');
@@ -61,7 +63,9 @@ var enabled = {
   // Fail due to JSHint warnings only when `--production`
   failJSHint: argv.production,
   // Strip debug statments from javascript when `--production`
-  stripJSDebug: argv.production
+  stripJSDebug: argv.production,
+  // UnCSS when `--production`
+  unCss: argv.production
 };
 
 // Path to the compiled assets manifest in the dist directory
@@ -103,6 +107,22 @@ var cssTasks = function(filename) {
       }));
     })
     .pipe(concat, filename)
+    .pipe(function() {
+      return gulpif(enabled.unCss, uncss({
+        html: require('./sitemap.json'),
+        ignore: [
+          // /js/,
+          new RegExp('.*\.post-type-.*'),
+          new RegExp('.*\.is-.*'),
+          new RegExp('.*\.top-bar.*'),
+          new RegExp('.*\.menu.*'),
+          new RegExp('^meta\..*'),
+          new RegExp('^\.is-.*'),
+          new RegExp('^\.js-.*'),
+          new RegExp('^\.owl-.*')
+          ]
+      }));
+    })
     .pipe(autoprefixer, {
       browsers: [
         'last 2 versions',
@@ -240,6 +260,10 @@ gulp.task('jshint', function() {
     .pipe(gulpif(enabled.failJSHint, jshint.reporter('fail')));
 });
 
+// ### Sitemap
+// Generates the sitemap.json for UnCSS
+gulp.task('sitemap', shell.task(['curl --silent --output sitemap.json http://localhost/your-site-name-here/\?show_sitemap']));
+
 // ### Clean
 // `gulp clean` - Deletes the build folder entirely.
 gulp.task('clean', require('del').bind(null, [path.dist]));
@@ -254,6 +278,7 @@ gulp.task('watch', function() {
   browserSync.init({
     files: ['{lib,templates}/**/*.php', '*.php'],
     proxy: config.devUrl,
+    browser: "Google Chrome",
     snippetOptions: {
       whitelist: ['/wp-admin/admin-ajax.php'],
       blacklist: ['/wp-admin/**']
